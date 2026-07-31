@@ -6,10 +6,16 @@ on:
       prompt:
         description: Prompt passed to codex exec
         required: true
-        default: Inspect this repository and briefly describe what it contains. Do not modify files.
+        default: >-
+          Analyze this repository and create exactly one GitHub issue with a concise
+          architecture summary, project structure, risks, and recommended next steps.
+          Use gh issue create with the GH_TOKEN and GH_REPO environment variables.
+          Do not modify files, create commits, or push. After the issue is created,
+          reply with IT_CODEX_ISSUE_OK and the issue URL.
 
 permissions:
   contents: read
+  issues: write
 
 jobs:
   codex:
@@ -38,6 +44,8 @@ jobs:
           CODEX_API_KEY: ${{ secrets.CODEX_API_KEY }}
           CODEX_BASE_URL: ${{ vars.CODEX_BASE_URL }}
           CODEX_MODEL: ${{ vars.CODEX_MODEL }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_REPO: ${{ github.repository }}
           CODEX_PROMPT: ${{ inputs.prompt }}
         shell: bash
         run: |
