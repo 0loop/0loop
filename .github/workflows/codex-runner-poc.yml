@@ -1,0 +1,86 @@
+name: Codex runner proof of concept
+
+on:
+  workflow_dispatch:
+    inputs:
+      prompt:
+        description: Prompt passed to codex exec
+        required: true
+        default: Inspect this repository and briefly describe what it contains. Do not modify files.
+
+permissions:
+  contents: read
+
+jobs:
+  codex:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v5
+        with:
+          persist-credentials: false
+
+      - name: Set up Bun
+        uses: oven-sh/setup-bun@v2
+
+      - name: Install Codex CLI
+        run: bun add --global @openai/codex@latest
+
+      - name: Print tool versions
+        run: |
+          bun --version
+          codex --version
+
+      - name: Run Codex
+        env:
+          CODEX_API_KEY: ${{ secrets.CODEX_API_KEY }}
+          CODEX_BASE_URL: ${{ vars.CODEX_BASE_URL }}
+          CODEX_MODEL: ${{ vars.CODEX_MODEL }}
+          CODEX_PROMPT: ${{ inputs.prompt }}
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          if [[ -z "${CODEX_API_KEY:-}" ]]; then
+            echo "::error::Repository secret CODEX_API_KEY is not configured."
+            exit 1
+          fi
+
+          codex_args=(--ask-for-approval never)
+
+          if [[ -n "${CODEX_BASE_URL:-}" ]]; then
+            codex_args+=(--config "openai_base_url=${CODEX_BASE_URL}")
+          fi
+
+          if [[ -n "${CODEX_MODEL:-}" ]]; then
+            codex_args+=(--model "$CODEX_MODEL")
+          fi
+
+          CODEX_API_KEY="$CODEX_API_KEY" codex "${codex_args[@]}" exec \
+            --ignore-user-config \
+            --ephemeral \
+            --sandbox read-only \
+            --output-last-message "$RUNNER_TEMP/codex-output.md" \
+            "$CODEX_PROMPT"
+
+      - name: Publish result
+        if: always()
+        shell: bash
+        run: |
+          {
+            echo "## Codex runner proof of concept"
+            echo
+            echo "- Bun: \`$(bun --version)\`"
+            echo "- Codex: \`$(codex --version)\`"
+            echo
+
+            if [[ -s "$RUNNER_TEMP/codex-output.md" ]]; then
+              echo "### Codex output"
+              echo
+              cat "$RUNNER_TEMP/codex-output.md"
+            else
+              echo "Codex did not produce a final message. Check the job log."
+            fi
+          } >> "$GITHUB_STEP_SUMMARY"
