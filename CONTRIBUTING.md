@@ -1,6 +1,6 @@
 # Contributing to ITS
 
-ITS turns GitHub Actions runs into AI agent executions. This guide covers how changes get made here.
+ITS is intended to run AI agents in GitHub Actions workflows. This guide covers how changes get made here.
 
 ## Getting started
 
@@ -22,8 +22,8 @@ Every change starts with an issue, not code:
 
 ## Making changes
 
-- The maintainer develops on `dev` and opens pull requests to `main`.
-- External contributors: fork the repo, branch off the fork's `main` with a name like `<type>/<description>` (e.g. `fix/readme-typo`), and open a pull request from the fork branch to `main`.
+- Maintainers and collaborators with write access: create a named branch from the latest `origin/main` using `<type>/<description>` (e.g. `fix/readme-typo`), push it to this repository, and open a pull request to `main`.
+- External contributors without write access: fork the repository, create the same kind of named branch from the upstream `main`, push it to the fork, and open a pull request to this repository's `main`.
 - `main` receives no direct pushes; pull requests merge with squash, keeping history linear.
 - Commit messages follow Conventional Commits: `<type>(scope): message`, imperative mood, describing only that change.
 - A pull request body states what changed and why and references the accepted issue with a closing keyword (`fixes #N`); the issue-gate check enforces this.

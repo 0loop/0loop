@@ -3,14 +3,14 @@ name: github-workflow
 description: >
   Git/GitHub collaboration rules for the ITS repo (minorcell/its). Follow this
   skill before any commit, branch, sync, rebase, PR, issue, or label
-  operation. Core rules: never touch the main branch directly; the creator works
-  on the dev branch, external contributors go through fork + PR; commits use the
-  Conventional Commits format; sync with fetch + rebase before switching branches
-  and before pushing to keep history linear; squash merges only; every change
-  is issue-driven — a PR must reference an issue carrying the accepted label,
-  and decision labels (accepted/rejected/deferred) are applied only by the
-  maintainer side: the maintainer, or the repo's AI agent on their explicit
-  authorization.
+  operation. Core rules: never touch the main branch directly; maintainers and
+  collaborators with write access use named branches from origin/main, while
+  external contributors use a fork; commits use the Conventional Commits format;
+  sync with fetch + rebase before creating a branch and before pushing to keep
+  history linear; squash merges only; every change is issue-driven — a PR must
+  reference an issue carrying the accepted label, and decision labels
+  (accepted/rejected/deferred) are applied only by the maintainer side: the
+  maintainer, or the repo's AI agent on their explicit authorization.
 ---
 
 # GitHub Workflow
@@ -21,26 +21,28 @@ Git/GitHub collaboration rules for the ITS repo (minorcell/its). Check this docu
 
 - Never touch the `main` branch directly: no direct commits, no direct pushes; main only receives changes through PRs.
 - Always squash-merge (the repo is already configured to allow squash only), keeping history linear.
-- External contributors must never push any branch to the main repo; the creator pushes `dev` only.
+- Only maintainers and collaborators with write access push feature branches to the main repository; external contributors push to their forks.
 
 ## Roles and paths
 
-### Creator (repo owner)
+### Maintainers and collaborators with write access
 
-Cannot fork their own repo, so development happens on the `dev` branch of the main repo:
+Create a named branch directly from the latest `origin/main`:
 
-1. Implement the feature on `dev`.
-2. Commit and push `dev`.
-3. Open a PR: `dev` → `main`, squash merge.
+1. Fetch the main repository: `git fetch origin`.
+2. Create a branch: `git switch -c <type>/<hyphenated-description> origin/main`.
+3. Commit and push the branch to `origin`.
+4. Open a PR from the branch to `main`, then squash merge.
 
-### External contributors
+### External contributors without write access
 
 Must go through fork + PR:
 
 1. Fork the main repo and clone the fork.
-2. Create a clearly named branch: `<type>/<hyphenated-description>`, e.g. `feature/agent-log`, `fix/readme-typo`.
-3. Commit and push to the fork.
-4. Open a PR: fork branch → main repo `main`, squash merge.
+2. Configure the main repository as `upstream` and fetch it.
+3. Create a clearly named branch from `upstream/main`: `<type>/<hyphenated-description>`, e.g. `feature/agent-log`, `fix/readme-typo`.
+4. Commit and push the branch to the fork.
+5. Open a PR from the fork branch to the main repository's `main`, then squash merge.
 
 ## Commit message
 
@@ -52,9 +54,9 @@ Use the unified format `<type>(scope): message`:
 
 ## Syncing (rebase, keep a straight line)
 
-Sync main at two moments: **before switching to a new branch** and **before pushing**.
+Fetch the canonical repository before creating a branch. Rebase a branch on the latest `main` before pushing.
 
-Creator (on `dev`):
+Maintainers and collaborators with write access:
 
 ```bash
 git fetch origin
@@ -93,11 +95,11 @@ No fixed template, but must state clearly:
 
 ## Labels
 
-| Label      | Meaning                 |
-| ---------- | ----------------------- |
-| `accepted` | Accepted, dev starts    |
-| `rejected` | Rejected                |
-| `deferred` | Deferred, not scheduled |
+| Label      | Meaning                      |
+| ---------- | ---------------------------- |
+| `accepted` | Accepted, development starts |
+| `rejected` | Rejected                     |
+| `deferred` | Deferred, not scheduled      |
 
 Decision labels (`accepted`, `rejected`, `deferred`) are applied only by the maintainer side: the maintainer, or the repo's AI agent on the maintainer's explicit authorization. Type labels (`bug`, `enhancement`, `documentation`, `question`) are triage metadata; the feature template applies `enhancement` automatically, and the maintainer adds other type labels during triage.
 

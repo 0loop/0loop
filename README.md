@@ -1,19 +1,29 @@
 # ITS
 
-**Turn GitHub Actions into your AI agent.**
+ITS is an early-stage GitHub Action for running AI agents in GitHub Actions
+workflows. The intended design combines a natural-language task, model connection
+settings, repository context, and GitHub permissions in one action step.
 
-ITS is a GitHub Action that turns every workflow run into an AI agent execution: GitHub provides the environment (a fresh Linux VM, checked-out code, an auto-injected GITHUB_TOKEN), you write a single `prompt`, and the agent reads code, runs commands, and edits files in that environment — then writes the results back to the repo using GitHub's own permission mechanisms: comments, PRs, labels.
+## Project status
 
-- **Zero infrastructure**: free quota on public repos, no servers of any kind
-- **Zero-auth design**: the agent's permissions are exactly the workflow's `permissions:` declaration, enforced by GitHub
-- **Model-agnostic**: Anthropic / OpenAI / Google / any OpenAI-compatible gateway — switch models without touching the prompt
-- **Ecosystem passthrough**: AGENTS.md, skills, and any MCP server already in the repo are consumed directly — no invented config format
+ITS is currently a development scaffold, not a functional agent runner.
 
-## Quick start
+- `action.yml` declares the intended inputs and forwards them to the runtime.
+- The composite action installs Bun 1.3.14, builds `src/index.ts`, and runs the
+  resulting executable.
+- The executable currently prints `ITS`. Model connections, event context, agent
+  execution, GitHub tools, skills, and MCP integration are not implemented.
 
-Three steps to give your repo an issue-triage agent:
+The examples below document the intended product interface. They do not work with
+the current implementation and may change as each capability is implemented and
+verified.
 
-1. Create `.github/workflows/triage.yml`:
+## Intended usage
+
+### Issue triage
+
+The intended issue-triage workflow classifies a new issue, applies a label, and
+responds when more information is needed:
 
 ```yaml
 name: Issue Triage
@@ -26,57 +36,32 @@ permissions:
   issues: write
 
 jobs:
-  its:
+  triage:
     runs-on: ubuntu-latest
     steps:
       - uses: minorcell/its@v1
         with:
           prompt: |
-            A new issue is attached below. Classify it (bug / feature request /
-            question) and apply the matching label; comment asking for repro
-            steps when missing; answer common questions directly.
+            Classify the new issue as a bug, feature request, or question and
+            apply the matching label. If a bug lacks reproduction steps, ask
+            for them. Answer questions when the repository documentation
+            provides a clear answer.
         env:
           ITS_PROTOCOL: anthropic-messages
-          ITS_MODEL: claude-sonnet-5
+          ITS_MODEL: your-model-id
           ITS_API_KEY: ${{ secrets.ITS_API_KEY }}
 ```
 
-2. In Settings → Secrets and variables → Actions, add a secret `ITS_API_KEY` with your model provider's API key. To manage `ITS_PROTOCOL` and `ITS_MODEL` org-wide, replace the literals with `${{ vars.XXX }}` references.
+This design expects `ITS_API_KEY` to be stored as a GitHub Actions secret. The
+protocol and model can use repository or organization variables instead of
+literals when they are managed centrally.
 
-3. Open a new issue. ITS completes a run within minutes: classify, label, comment when needed. The whole process is visible live on the Actions tab.
+### Pull request review
 
-## Input reference
-
-`with:` parameters:
-
-| Parameter | Required | Description                                                                                                                                                         |
-| --------- | -------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `prompt`  | ✅       | Natural-language description of what this run should accomplish. Event context (new issue body, PR diff, actor, etc.) is appended automatically — no parsing needed |
-| `tools`   |          | Additional tools, array form                                                                                                                                        |
-| `skills`  |          | Skills, array form. `github.com/<owner>/<repo>` is a remote skill repo installed via skills.sh; `.` enables this repo's `.agents/skills/` directory                 |
-| `mcp`     |          | MCP server launch commands, array form. Credentials reference `$VAR` slots, resolved from `env:`                                                                    |
-
-`env:` variables:
-
-| Variable       | Required | Description                                                                                                                                   |
-| -------------- | -------- | --------------------------------------------------------------------------------------------------------------------------------------------- |
-| `ITS_PROTOCOL` | ✅       | Protocol name (not vendor name): `anthropic-messages` \| `openai-chat-completions` \| `openai-responses` \| `gemini`                          |
-| `ITS_MODEL`    | ✅       | Model ID, e.g. `claude-sonnet-5`, `gpt-5`, `gemini-2.5-pro`                                                                                   |
-| `ITS_API_KEY`  | ✅       | API key for the current protocol                                                                                                              |
-| `ITS_BASE_URL` |          | Base URL when using a third-party gateway; `ITS_PROTOCOL` should name the protocol the gateway implements (usually `openai-chat-completions`) |
-
-Connection info (protocol, model, key, gateway URL) lives together in `env:`, grouped with secrets, so it can be managed org-wide via `${{ vars.XXX }}`; `with:` describes behavior only.
-
-`ITS_PROTOCOL` values are protocol names, not vendor names: `openai-chat-completions` covers every OpenAI-compatible gateway (DeepSeek, Groq, OpenRouter, Ollama, etc.), with the gateway URL set via `ITS_BASE_URL`; `openai-responses` is OpenAI's Responses API — a different wire protocol from Chat Completions, not interchangeable; `anthropic-messages` likewise covers Anthropic-compatible gateways; `gemini` maps to the Gemini API.
-
-## More examples
-
-### PR review
-
-To read code, check out explicitly:
+A review workflow checks out the pull request so the agent can inspect its code:
 
 ```yaml
-name: PR Review
+name: Pull Request Review
 on:
   pull_request:
     types: [opened, synchronize]
@@ -86,137 +71,181 @@ permissions:
   pull-requests: write
 
 jobs:
-  its:
+  review:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
       - uses: minorcell/its@v1
         with:
           prompt: |
-            The working directory has the current PR checked out. Post inline
-            review comments in the order correctness > security >
-            maintainability, then a final summary comment.
+            Review the current pull request. Report actionable findings in the
+            order correctness, security, and maintainability, then publish a
+            concise summary.
         env:
-          ITS_PROTOCOL: openai-chat-completions
-          ITS_MODEL: gpt-5
+          ITS_PROTOCOL: openai-responses
+          ITS_MODEL: your-model-id
           ITS_API_KEY: ${{ secrets.ITS_API_KEY }}
 ```
 
-### Scheduled weekly digest
+### Scheduled digest
+
+A scheduled workflow summarizes repository activity. GitHub Actions interprets
+the cron expression as UTC unless a timezone is specified.
 
 ```yaml
 name: Weekly Digest
 on:
   schedule:
-    - cron: '0 9 * * 1' # every Monday 9:00
+    - cron: '0 9 * * 1' # Monday at 09:00 UTC
 
 permissions:
   contents: read
   discussions: write
 
 jobs:
-  its:
+  digest:
     runs-on: ubuntu-latest
     steps:
       - uses: minorcell/its@v1
         with:
           prompt: |
-            Summarize the last 7 days of commits, PRs, and issues into a weekly
-            digest posted to Discussions, organized as progress / problems /
-            next week.
+            Summarize commits, pull requests, and issues from the previous seven
+            days. Publish the digest to Discussions under progress, problems,
+            and next steps.
         env:
           ITS_PROTOCOL: gemini
-          ITS_MODEL: gemini-2.5-pro
+          ITS_MODEL: your-model-id
           ITS_API_KEY: ${{ secrets.ITS_API_KEY }}
 ```
 
-### Third-party gateway (OpenAI-compatible)
+### Compatible gateway
 
-For any OpenAI-compatible third-party gateway (DeepSeek, private proxies, etc.), set `ITS_PROTOCOL` to the protocol it implements and point `ITS_BASE_URL` at it:
+The intended interface separates the model protocol from the gateway URL. A
+gateway must implement the selected protocol; claiming compatibility with a
+provider does not guarantee that its protocol is identical.
 
 ```yaml
 - uses: minorcell/its@v1
   with:
     prompt: |
-      Read this repo's README and the latest 20 commits,
-      then fill in missing documentation sections.
+      Read this repository's README and recent commits, then update incomplete
+      documentation.
   env:
     ITS_PROTOCOL: openai-chat-completions
-    ITS_MODEL: deepseek-chat
-    ITS_API_KEY: ${{ secrets.DEEPSEEK_API_KEY }}
-    ITS_BASE_URL: https://api.deepseek.com/v1
+    ITS_MODEL: gateway-model-id
+    ITS_API_KEY: ${{ secrets.GATEWAY_API_KEY }}
+    ITS_BASE_URL: https://gateway.example.com/v1
 ```
 
-### Skills: local and remote
+### Local and remote skills
+
+GitHub Actions passes action inputs as strings. List-valued inputs are intended
+to use a YAML sequence inside a multiline string:
 
 ```yaml
 - uses: minorcell/its@v1
   with:
     prompt: |
-      Prepare a release using the repo's release-flow skill:
-      check the changelog, bump versions, open a release PR.
-    skills:
-      - . # all skills under this repo's .agents/skills/
-      - github.com/minorcell/skills # remote skill repo, installed via skills.sh
+      Prepare a release according to the repository's release skill. Check the
+      changelog, update versions, and open a release pull request.
+    skills: |
+      - .
+      - github.com/owner/skills
   env:
     ITS_PROTOCOL: anthropic-messages
-    ITS_MODEL: claude-sonnet-5
+    ITS_MODEL: your-model-id
     ITS_API_KEY: ${{ secrets.ITS_API_KEY }}
 ```
 
+The intended meaning of `.` is the current repository's `.agents/skills/`
+directory. A `github.com/<owner>/<repo>` entry identifies a remote skill
+repository to install through skills.sh.
+
 ### MCP server with credentials
 
-For remote MCP calls that need credentials, keep secrets out of `with:` — reference `$VAR` slots resolved from `env:`:
+MCP commands use the same planned list representation. Credentials remain in
+the workflow environment and are referenced by name in the command:
 
 ```yaml
 - uses: minorcell/its@v1
   with:
     prompt: |
-      A new issue is attached below. Query the internal stats tool
-      and reply to the user with data, then apply the matching label.
-    mcp:
-      - 'npx -y @team/stats-server --token $MCP_TOKEN'
+      Query the internal statistics tool, reply to the issue with the relevant
+      data, and apply the matching label.
+    mcp: |
+      - npx -y @team/stats-server --token $MCP_TOKEN
   env:
-    ITS_PROTOCOL: openai-chat-completions
-    ITS_MODEL: gpt-5
+    ITS_PROTOCOL: openai-responses
+    ITS_MODEL: your-model-id
     ITS_API_KEY: ${{ secrets.ITS_API_KEY }}
     MCP_TOKEN: ${{ secrets.MCP_TOKEN }}
 ```
 
-## Repo ecosystem
+## Intended interface
 
-ITS invents no config format of its own — it consumes what is already in the repo:
+The target interface separates task behavior from model connection settings.
+The composite action already declares these names, but the runtime does not yet
+process their values.
 
-- **AGENTS.md**: loaded automatically when present at the repo root, serving as the agent's repository context (the same way Claude Code reads CLAUDE.md).
-- **`.agents/skills/`**: this repo's skills directory; enable with `skills: ['.']`.
-- **Remote skill repos**: declare `github.com/<owner>/<repo>`; installed via skills.sh.
-- **MCP servers**: declared as command arrays; servers from any ecosystem can be plugged in.
+Action inputs:
 
-## Permission model
+| Input    | Required | Intended meaning                                   |
+| -------- | -------- | -------------------------------------------------- |
+| `prompt` | Yes      | Natural-language description of the task           |
+| `tools`  | No       | Additional tools made available to the agent       |
+| `skills` | No       | Local or remote skills made available to the agent |
+| `mcp`    | No       | MCP server commands started for the agent          |
 
-ITS introduces no permission system of its own. What the agent can do is determined by the `permissions:` declaration in the workflow file; the toolset expands and contracts accordingly:
+Model connection environment:
 
-- Without `issues: write`, no "post a comment" tool exists in the agent's toolbox;
-- When triggered by a fork PR, GitHub automatically downgrades the token to read-only, and the agent is left with read tools only;
-- The API key lives only in your secrets — ITS never touches or resells it.
+| Variable       | Required | Intended meaning                                   |
+| -------------- | -------- | -------------------------------------------------- |
+| `ITS_PROTOCOL` | Yes      | Model API wire protocol                            |
+| `ITS_MODEL`    | Yes      | Model identifier accepted by the selected provider |
+| `ITS_API_KEY`  | Yes      | Credential for the selected provider               |
+| `ITS_BASE_URL` | No       | Base URL for a compatible gateway                  |
 
-This boundary is enforced by GitHub and holds regardless of ITS.
+The planned protocol identifiers are `anthropic-messages`,
+`openai-chat-completions`, `openai-responses`, and `gemini`. They name wire
+protocols, not vendors. Provider and gateway compatibility will be documented
+from implemented and tested behavior.
 
-## Caveats
+## Intended repository integration
 
-- **Async execution**: minutes of latency between trigger and completion (queueing + environment startup). ITS suits asynchronous tasks, not real-time conversations.
-- **Cost**: every run consumes tokens from your model account; scope the prompt explicitly.
-- **Idempotency**: on duplicate triggers of the same event, ITS checks whether it already handled it, to avoid repeated replies.
-- **Auditability**: every step (tool calls, model output) is in the Actions logs, and the artifacts are ordinary GitHub objects.
-- **Prompt injection**: event content such as issue bodies is treated as untrusted data and handled as data only.
+ITS is intended to reuse common repository conventions instead of replacing
+them with ITS-specific equivalents:
 
-## Roadmap
+- Load root-level `AGENTS.md` as repository instructions when it is present.
+- Load local skills from `.agents/skills/` when `.` is listed in `skills`.
+- Install explicitly listed remote skill repositories through skills.sh.
+- Start explicitly configured MCP servers and make their tools available to the
+  agent.
 
-- **Phase 1**: any GitHub user, with one workflow file and one secret, gets ITS to accomplish a real task in their repo without ever leaving GitHub.
-- **Phase 2**: users never learn a new format for ITS — existing AGENTS.md, skills, and any MCP server are consumed directly; switching models or protocols never changes the prompt.
-- **Phase 3**: a team composes multiple ITS runs into pipelines (plan, execute, review, each with its own role) — what gets reused is not code but other people's workflow files.
-- **Phase 4 (to validate)**: enterprise environments (self-hosted runners, private gateways, private models) with an experience identical to the public internet.
+## Intended permission boundary
 
-## Status
+The workflow's `permissions:` block sets the requested access for its
+`GITHUB_TOKEN`; GitHub may reduce the effective permissions. For example,
+workflows triggered by a `pull_request` from a fork receive a read-only token and
+do not receive repository secrets.
 
-🚧 In development, interfaces may change.
+ITS is intended to expose a GitHub write operation only when the effective token
+has the corresponding permission. This permission-aware tool selection is not
+implemented yet.
+
+## Development
+
+The project uses Bun 1.3.14, which is pinned in CI.
+
+```bash
+bun install --frozen-lockfile
+bun run fmt:check
+bun run lint:check
+bun run build
+```
+
+See [CONTRIBUTING.md](CONTRIBUTING.md) before proposing or implementing a
+change.
+
+## License
+
+ITS is licensed under the [Apache License 2.0](LICENSE).
