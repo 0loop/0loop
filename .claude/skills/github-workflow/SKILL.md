@@ -2,18 +2,20 @@
 name: github-workflow
 description: >
   Git/GitHub collaboration rules for the ITS repo (minorcell/its). Follow this
-  skill before any commit, branch, sync, rebase, PR, proposal (issue), or label
+  skill before any commit, branch, sync, rebase, PR, issue, or label
   operation. Core rules: never touch the main branch directly; the creator works
   on the dev branch, external contributors go through fork + PR; commits use the
   Conventional Commits format; sync with fetch + rebase before switching branches
-  and before pushing to keep history linear; squash merges only; code changes
-  require a proposal first (an issue labeled proposal:accepted), and PR bodies
-  reference the issue with fixes/closes.
+  and before pushing to keep history linear; squash merges only; every change
+  is issue-driven — a PR must reference an issue carrying the accepted label,
+  and decision labels (accepted/rejected/deferred) are applied only by the
+  maintainer side: the maintainer, or the repo's AI agent on their explicit
+  authorization.
 ---
 
 # GitHub Workflow
 
-Git/GitHub collaboration rules for the ITS repo (minorcell/its). Check this document before any git operation, PR, proposal (issue), or label management.
+Git/GitHub collaboration rules for the ITS repo (minorcell/its). Check this document before any git operation, PR, issue, or label management.
 
 ## Hard rules
 
@@ -69,18 +71,17 @@ git rebase upstream/main
 - Use fetch + rebase only; no merge commits, history always a straight line.
 - On conflicts, resolve and `git rebase --continue`; never merge.
 
-## Proposal first
+## Issue first
 
-Every code change: discuss the design first, then write code, then submit:
+Every change: issue first, then code, then PR:
 
-1. Submit a proposal as a GitHub issue, clearly stating background, goals, and approach.
-2. Apply a type label to the issue: `proposal:full-spec` when the proposal changes a broad scope of the codebase, `proposal:minispec` when it is a small implementation or modification.
-3. Wait for a decision label:
-   - `proposal:accepted` → development starts
-   - `proposal:rejected` → closed, no development
-   - `proposal:deferred` → not scheduled
-   - A proposal without a decision label must not start development
-4. Open a PR when development is done. The PR body must reference the corresponding issue with a closing keyword (`fixes #N` or `closes #N`), so merging closes the issue automatically.
+1. Open an issue using a template: **issue** for bugs and questions, **feature** for new functionality, or blank. State the type, scope, and impact; feature proposals include background, goals, and approach. Templates apply their labels automatically — contributors don't need (and can't) apply labels themselves.
+2. Wait for the maintainer's decision:
+   - `accepted` → development starts
+   - `rejected` → closed, no development
+   - `deferred` → not scheduled
+     Decision labels are applied only by the maintainer side: the maintainer, or the repo's AI agent (Claude Code / ITS) when the maintainer explicitly authorizes it. External contributors and automated triage never touch them. No substitute counts as acceptance: not answers in conversation, not "go ahead" — only the label on the issue. Without it, development must not start.
+3. Open a PR when development is done. The PR body must reference the issue with a closing keyword (`fixes #N` or `closes #N`), so merging closes the issue automatically. The issue-gate check enforces this — no exemptions, docs included.
 
 ## PR body
 
@@ -88,22 +89,22 @@ No fixed template, but must state clearly:
 
 - What changed and why;
 - Background when necessary (context, tradeoffs);
-- Reference the proposal issue (`fixes` / `closes`).
+- Reference the accepted issue (`fixes` / `closes`).
 
-## Proposal labels
+## Labels
 
-| Label                | Meaning                 |
-| -------------------- | ----------------------- |
-| `proposal:accepted`  | Accepted, dev starts    |
-| `proposal:rejected`  | Rejected                |
-| `proposal:deferred`  | Deferred, not scheduled |
-| `proposal:full-spec` | Full specification      |
-| `proposal:minispec`  | Mini specification      |
+| Label      | Meaning                 |
+| ---------- | ----------------------- |
+| `accepted` | Accepted, dev starts    |
+| `rejected` | Rejected                |
+| `deferred` | Deferred, not scheduled |
+
+Decision labels (`accepted`, `rejected`, `deferred`) are applied only by the maintainer side: the maintainer, or the repo's AI agent on the maintainer's explicit authorization. Type labels (`bug`, `enhancement`, `documentation`, `question`) are triage metadata; the feature template applies `enhancement` automatically, and the maintainer adds other type labels during triage.
 
 ## Pre-push checklist
 
 - [ ] Rebased on the latest `main`, history is a straight line
 - [ ] Commit messages follow `<type>(scope): message`
-- [ ] There is a `proposal:accepted` issue and the PR body references it with `fixes`/`closes` or `resolves` ...
+- [ ] The PR body references an issue carrying `accepted` with a closing keyword (the issue-gate check enforces this)
 - [ ] The PR body clearly states what changed and why
 - [ ] The PR merges with squash

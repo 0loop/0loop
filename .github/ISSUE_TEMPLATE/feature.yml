@@ -1,0 +1,44 @@
+name: Feature
+description: Propose a new feature or a change to existing behavior
+title: 'feat: '
+labels: [enhancement]
+body:
+  - type: textarea
+    id: background
+    attributes:
+      label: Background
+      description: What problem does this solve? What is the current state?
+    validations:
+      required: true
+  - type: textarea
+    id: goals
+    attributes:
+      label: Goals
+      description: What should the change achieve?
+    validations:
+      required: true
+  - type: textarea
+    id: approach
+    attributes:
+      label: Approach
+      description: How do you plan to implement it? Which parts of the codebase are affected?
+    validations:
+      required: true
+  - type: dropdown
+    id: scope
+    attributes:
+      label: Scope
+      description: How broad is the change?
+      options:
+        - Single module
+        - Multiple modules
+        - Project-wide
+    validations:
+      required: true
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives
+      description: Other approaches considered and why they were discarded.
+    validations:
+      required: false
