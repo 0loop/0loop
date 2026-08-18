@@ -12,7 +12,7 @@ ITS turns GitHub Actions runs into AI agent executions. This guide covers how ch
 
 Every change starts with an issue, not code:
 
-1. Open an issue using a template: **Issue** for bugs and questions, **Feature** for new functionality. State the type, scope, and impact; feature proposals include background, goals, and approach. Templates apply their labels automatically — contributors don't need (and can't) apply labels themselves.
+1. Open an issue using a template: **Issue** for bugs and questions, **Feature** for new functionality. State the type, scope, and impact; feature proposals include background, goals, and approach. Issue titles carry a conventional type prefix like commit messages (`feat: `, `fix: `, `docs: `, `chore: `); the Feature template pre-fills `feat: `. Templates apply their labels automatically — contributors don't need (and can't) apply labels themselves.
 2. Wait for a decision. The maintainer (or the repo's AI agent acting on their explicit authorization) applies a decision label:
    - `accepted` → development may start
    - `rejected` → closed, no development

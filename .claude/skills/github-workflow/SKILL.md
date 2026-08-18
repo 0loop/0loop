@@ -75,7 +75,7 @@ git rebase upstream/main
 
 Every change: issue first, then code, then PR:
 
-1. Open an issue using a template: **issue** for bugs and questions, **feature** for new functionality, or blank. State the type, scope, and impact; feature proposals include background, goals, and approach. Templates apply their labels automatically — contributors don't need (and can't) apply labels themselves.
+1. Open an issue using a template: **issue** for bugs and questions, **feature** for new functionality, or blank. State the type, scope, and impact; feature proposals include background, goals, and approach. Issue titles carry a conventional type prefix like commit messages (`feat: `, `fix: `, `docs: `, `chore: `); the feature template pre-fills `feat: `. Templates apply their labels automatically — contributors don't need (and can't) apply labels themselves.
 2. Wait for the maintainer's decision:
    - `accepted` → development starts
    - `rejected` → closed, no development
