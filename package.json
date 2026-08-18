@@ -1,0 +1,21 @@
+{
+  "name": "its",
+  "private": true,
+  "type": "module",
+  "module": "src/index.ts",
+  "scripts": {
+    "build": "bun build --compile src/index.ts --outfile dist/its",
+    "lint": "oxlint --fix",
+    "fmt": "oxfmt",
+    "lint:check": "oxlint",
+    "fmt:check": "oxfmt --check"
+  },
+  "devDependencies": {
+    "@types/bun": "latest",
+    "oxfmt": "^0.63.0",
+    "oxlint": "^1.78.0"
+  },
+  "peerDependencies": {
+    "typescript": "^5"
+  }
+}

@@ -1,0 +1,38 @@
+name: ITS
+description: 'Turn a GitHub Actions run into an AI agent: write a prompt, it reads code, runs commands, and writes results back.'
+branding:
+  icon: terminal
+  color: blue
+inputs:
+  prompt:
+    description: Natural-language description of what this run should accomplish. Event context is appended automatically.
+    required: true
+  tools:
+    description: Additional tools, array form.
+  skills:
+    description: Skills, array form. github.com/<owner>/<repo> installs a remote skill repo via skills.sh; . enables this repo's .agents/skills/ directory.
+  mcp:
+    description: MCP server launch commands, array form. Credentials reference $VAR slots, resolved from env.
+runs:
+  using: composite
+  steps:
+    - name: Set up Bun
+      uses: oven-sh/setup-bun@v2
+      with:
+        bun-version: 1.3.14
+    - name: Run ITS
+      shell: bash
+      run: |
+        cd "$GITHUB_ACTION_PATH"
+        bun install --frozen-lockfile
+        bun run build
+        ./dist/its
+      env:
+        ITS_PROMPT: ${{ inputs.prompt }}
+        ITS_TOOLS: ${{ inputs.tools }}
+        ITS_SKILLS: ${{ inputs.skills }}
+        ITS_MCP: ${{ inputs.mcp }}
+        ITS_PROTOCOL: ${{ env.ITS_PROTOCOL }}
+        ITS_MODEL: ${{ env.ITS_MODEL }}
+        ITS_API_KEY: ${{ env.ITS_API_KEY }}
+        ITS_BASE_URL: ${{ env.ITS_BASE_URL }}
