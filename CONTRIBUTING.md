@@ -12,7 +12,7 @@
 
 Every change starts with an issue, not code:
 
-1. Open an issue using a template: **Issue** for bugs and questions, **Feature** for new functionality. State the type, scope, and impact; feature proposals include background, goals, and approach. Issue titles carry a conventional type prefix like commit messages (`feat: `, `fix: `, `docs: `, `chore: `); the Feature template pre-fills `feat: `. Templates apply their labels automatically — contributors don't need (and can't) apply labels themselves.
+1. Open an issue using a template: **Issue** for bugs and questions, **Feature** for new functionality. State the type, scope, and impact; feature proposals include background, goals, and approach. Issue titles carry a conventional type prefix like commit messages (`feat: `, `fix: `, `docs: `, `chore: `); the Feature template pre-fills `feat: ` and applies the `enhancement` label.
 2. Wait for a decision. The maintainer (or the repo's AI agent acting on their explicit authorization) applies a decision label:
    - `accepted` → development may start
    - `rejected` → closed, no development
@@ -27,21 +27,6 @@ Every change starts with an issue, not code:
 - `main` receives no direct pushes; pull requests merge with squash, keeping history linear.
 - Commit messages follow Conventional Commits: `<type>(scope): message`, imperative mood, describing only that change.
 - A pull request body states what changed and why and references the accepted issue with a closing keyword (`fixes #N`); the issue-gate check enforces this.
-
-## Developer Certificate of Origin (DCO)
-
-0loop uses the DCO instead of a CLA. Every commit must carry a sign-off attesting you have the right to submit the change under the project's license:
-
-```
-Signed-off-by: Name <email>
-```
-
-- Sign when committing: `git commit -s` (or `--signoff`).
-- Fix the last commit: `git commit --amend --no-edit --signoff`; several: `git rebase --signoff HEAD~N`.
-- The GitHub web editor adds the trailer automatically.
-- The sign-off identity must match the commit author; a CI check blocks pull requests with unsigned commits.
-
-The full text is at https://developercertificate.org.
 
 ## Code style
 
