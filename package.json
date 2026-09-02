@@ -1,10 +1,10 @@
 {
-  "name": "its",
+  "name": "0loop",
   "private": true,
   "type": "module",
   "module": "src/index.ts",
   "scripts": {
-    "build": "bun build --compile src/index.ts --outfile dist/its",
+    "build": "bun build --compile src/index.ts --outfile dist/0loop",
     "lint": "oxlint --fix",
     "fmt": "oxfmt",
     "lint:check": "oxlint",

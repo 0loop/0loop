@@ -3,7 +3,7 @@
   "configVersion": 1,
   "workspaces": {
     "": {
-      "name": "its",
+      "name": "0loop",
       "devDependencies": {
         "@types/bun": "latest",
         "oxfmt": "^0.63.0",
