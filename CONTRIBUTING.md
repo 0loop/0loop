@@ -1,6 +1,6 @@
-# Contributing to ITS
+# Contributing to 0loop
 
-ITS is intended to run AI agents in GitHub Actions workflows. This guide covers how changes get made here.
+0loop is intended to run AI agents in GitHub Actions workflows. This guide covers how changes get made here.
 
 ## Getting started
 
@@ -30,7 +30,7 @@ Every change starts with an issue, not code:
 
 ## Developer Certificate of Origin (DCO)
 
-ITS uses the DCO instead of a CLA. Every commit must carry a sign-off attesting you have the right to submit the change under the project's license:
+0loop uses the DCO instead of a CLA. Every commit must carry a sign-off attesting you have the right to submit the change under the project's license:
 
 ```
 Signed-off-by: Name <email>

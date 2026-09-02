@@ -20,7 +20,7 @@ Protect stable, observable product behavior. Keep tests focused enough to surviv
 
 ## What matters most in this project
 
-ITS is an async agent runtime that runs headless on GitHub runners. Prioritize tests around:
+0loop is an async agent runtime that runs headless on GitHub runners. Prioritize tests around:
 
 - Protocol adapters: request serialization, response parsing, streaming, and error mapping for each wire protocol (anthropic-messages, openai-chat-completions, openai-responses, gemini).
 - Event context parsing: GITHUB_EVENT_PATH payloads (issue, PR, schedule) and their validation.

@@ -1,4 +1,4 @@
-name: ITS
+name: 0loop
 description: 'Turn a GitHub Actions run into an AI agent: write a prompt, it reads code, runs commands, and writes results back.'
 branding:
   icon: terminal
@@ -20,19 +20,19 @@ runs:
       uses: oven-sh/setup-bun@v2
       with:
         bun-version: 1.3.14
-    - name: Run ITS
+    - name: Run 0loop
       shell: bash
       run: |
         cd "$GITHUB_ACTION_PATH"
         bun install --frozen-lockfile
         bun run build
-        ./dist/its
+        ./dist/0loop
       env:
-        ITS_PROMPT: ${{ inputs.prompt }}
-        ITS_TOOLS: ${{ inputs.tools }}
-        ITS_SKILLS: ${{ inputs.skills }}
-        ITS_MCP: ${{ inputs.mcp }}
-        ITS_PROTOCOL: ${{ env.ITS_PROTOCOL }}
-        ITS_MODEL: ${{ env.ITS_MODEL }}
-        ITS_API_KEY: ${{ env.ITS_API_KEY }}
-        ITS_BASE_URL: ${{ env.ITS_BASE_URL }}
+        ZEROLOOP_PROMPT: ${{ inputs.prompt }}
+        ZEROLOOP_TOOLS: ${{ inputs.tools }}
+        ZEROLOOP_SKILLS: ${{ inputs.skills }}
+        ZEROLOOP_MCP: ${{ inputs.mcp }}
+        ZEROLOOP_PROTOCOL: ${{ env.ZEROLOOP_PROTOCOL }}
+        ZEROLOOP_MODEL: ${{ env.ZEROLOOP_MODEL }}
+        ZEROLOOP_API_KEY: ${{ env.ZEROLOOP_API_KEY }}
+        ZEROLOOP_BASE_URL: ${{ env.ZEROLOOP_BASE_URL }}

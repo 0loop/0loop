@@ -1,7 +1,7 @@
 ---
 name: github-workflow
 description: >
-  Git/GitHub collaboration rules for the ITS repo (minorcell/its). Follow this
+  Git/GitHub collaboration rules for the 0loop repo (0loop/0loop). Follow this
   skill before any commit, branch, sync, rebase, PR, issue, or label
   operation. Core rules: never touch the main branch directly; maintainers and
   collaborators with write access use named branches from origin/main, while
@@ -15,7 +15,7 @@ description: >
 
 # GitHub Workflow
 
-Git/GitHub collaboration rules for the ITS repo (minorcell/its). Check this document before any git operation, PR, issue, or label management.
+Git/GitHub collaboration rules for the 0loop repo (0loop/0loop). Check this document before any git operation, PR, issue, or label management.
 
 ## Hard rules
 
@@ -82,7 +82,7 @@ Every change: issue first, then code, then PR:
    - `accepted` → development starts
    - `rejected` → closed, no development
    - `deferred` → not scheduled
-     Decision labels are applied only by the maintainer side: the maintainer, or the repo's AI agent (Claude Code / ITS) when the maintainer explicitly authorizes it. External contributors and automated triage never touch them. No substitute counts as acceptance: not answers in conversation, not "go ahead" — only the label on the issue. Without it, development must not start.
+     Decision labels are applied only by the maintainer side: the maintainer, or the repo's AI agent (Claude Code / 0loop) when the maintainer explicitly authorizes it. External contributors and automated triage never touch them. No substitute counts as acceptance: not answers in conversation, not "go ahead" — only the label on the issue. Without it, development must not start.
 3. Open a PR when development is done. The PR body must reference the issue with a closing keyword (`fixes #N` or `closes #N`), so merging closes the issue automatically. The issue-gate check enforces this — no exemptions, docs included.
 
 ## PR body

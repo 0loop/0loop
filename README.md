@@ -1,17 +1,17 @@
-# ITS
+# 0loop
 
-ITS is an early-stage GitHub Action for running AI agents in GitHub Actions
+0loop is an early-stage GitHub Action for running AI agents in GitHub Actions
 workflows. The intended design combines a natural-language task, model connection
 settings, repository context, and GitHub permissions in one action step.
 
 ## Project status
 
-ITS is currently a development scaffold, not a functional agent runner.
+0loop is currently a development scaffold, not a functional agent runner.
 
 - `action.yml` declares the intended inputs and forwards them to the runtime.
 - The composite action installs Bun 1.3.14, builds `src/index.ts`, and runs the
   resulting executable.
-- The executable currently prints `ITS`. Model connections, event context, agent
+- The executable currently prints `0loop`. Model connections, event context, agent
   execution, GitHub tools, skills, and MCP integration are not implemented.
 
 The examples below document the intended product interface. They do not work with
@@ -39,7 +39,7 @@ jobs:
   triage:
     runs-on: ubuntu-latest
     steps:
-      - uses: minorcell/its@v1
+      - uses: 0loop/0loop@v1
         with:
           prompt: |
             Classify the new issue as a bug, feature request, or question and
@@ -47,12 +47,12 @@ jobs:
             for them. Answer questions when the repository documentation
             provides a clear answer.
         env:
-          ITS_PROTOCOL: anthropic-messages
-          ITS_MODEL: your-model-id
-          ITS_API_KEY: ${{ secrets.ITS_API_KEY }}
+          ZEROLOOP_PROTOCOL: anthropic-messages
+          ZEROLOOP_MODEL: your-model-id
+          ZEROLOOP_API_KEY: ${{ secrets.ZEROLOOP_API_KEY }}
 ```
 
-This design expects `ITS_API_KEY` to be stored as a GitHub Actions secret. The
+This design expects `ZEROLOOP_API_KEY` to be stored as a GitHub Actions secret. The
 protocol and model can use repository or organization variables instead of
 literals when they are managed centrally.
 
@@ -75,16 +75,16 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: minorcell/its@v1
+      - uses: 0loop/0loop@v1
         with:
           prompt: |
             Review the current pull request. Report actionable findings in the
             order correctness, security, and maintainability, then publish a
             concise summary.
         env:
-          ITS_PROTOCOL: openai-responses
-          ITS_MODEL: your-model-id
-          ITS_API_KEY: ${{ secrets.ITS_API_KEY }}
+          ZEROLOOP_PROTOCOL: openai-responses
+          ZEROLOOP_MODEL: your-model-id
+          ZEROLOOP_API_KEY: ${{ secrets.ZEROLOOP_API_KEY }}
 ```
 
 ### Scheduled digest
@@ -106,16 +106,16 @@ jobs:
   digest:
     runs-on: ubuntu-latest
     steps:
-      - uses: minorcell/its@v1
+      - uses: 0loop/0loop@v1
         with:
           prompt: |
             Summarize commits, pull requests, and issues from the previous seven
             days. Publish the digest to Discussions under progress, problems,
             and next steps.
         env:
-          ITS_PROTOCOL: gemini
-          ITS_MODEL: your-model-id
-          ITS_API_KEY: ${{ secrets.ITS_API_KEY }}
+          ZEROLOOP_PROTOCOL: gemini
+          ZEROLOOP_MODEL: your-model-id
+          ZEROLOOP_API_KEY: ${{ secrets.ZEROLOOP_API_KEY }}
 ```
 
 ### Compatible gateway
@@ -125,16 +125,16 @@ gateway must implement the selected protocol; claiming compatibility with a
 provider does not guarantee that its protocol is identical.
 
 ```yaml
-- uses: minorcell/its@v1
+- uses: 0loop/0loop@v1
   with:
     prompt: |
       Read this repository's README and recent commits, then update incomplete
       documentation.
   env:
-    ITS_PROTOCOL: openai-chat-completions
-    ITS_MODEL: gateway-model-id
-    ITS_API_KEY: ${{ secrets.GATEWAY_API_KEY }}
-    ITS_BASE_URL: https://gateway.example.com/v1
+    ZEROLOOP_PROTOCOL: openai-chat-completions
+    ZEROLOOP_MODEL: gateway-model-id
+    ZEROLOOP_API_KEY: ${{ secrets.GATEWAY_API_KEY }}
+    ZEROLOOP_BASE_URL: https://gateway.example.com/v1
 ```
 
 ### Local and remote skills
@@ -143,7 +143,7 @@ GitHub Actions passes action inputs as strings. List-valued inputs are intended
 to use a YAML sequence inside a multiline string:
 
 ```yaml
-- uses: minorcell/its@v1
+- uses: 0loop/0loop@v1
   with:
     prompt: |
       Prepare a release according to the repository's release skill. Check the
@@ -152,9 +152,9 @@ to use a YAML sequence inside a multiline string:
       - .
       - github.com/owner/skills
   env:
-    ITS_PROTOCOL: anthropic-messages
-    ITS_MODEL: your-model-id
-    ITS_API_KEY: ${{ secrets.ITS_API_KEY }}
+    ZEROLOOP_PROTOCOL: anthropic-messages
+    ZEROLOOP_MODEL: your-model-id
+    ZEROLOOP_API_KEY: ${{ secrets.ZEROLOOP_API_KEY }}
 ```
 
 The intended meaning of `.` is the current repository's `.agents/skills/`
@@ -167,7 +167,7 @@ MCP commands use the same planned list representation. Credentials remain in
 the workflow environment and are referenced by name in the command:
 
 ```yaml
-- uses: minorcell/its@v1
+- uses: 0loop/0loop@v1
   with:
     prompt: |
       Query the internal statistics tool, reply to the issue with the relevant
@@ -175,9 +175,9 @@ the workflow environment and are referenced by name in the command:
     mcp: |
       - npx -y @team/stats-server --token $MCP_TOKEN
   env:
-    ITS_PROTOCOL: openai-responses
-    ITS_MODEL: your-model-id
-    ITS_API_KEY: ${{ secrets.ITS_API_KEY }}
+    ZEROLOOP_PROTOCOL: openai-responses
+    ZEROLOOP_MODEL: your-model-id
+    ZEROLOOP_API_KEY: ${{ secrets.ZEROLOOP_API_KEY }}
     MCP_TOKEN: ${{ secrets.MCP_TOKEN }}
 ```
 
@@ -198,12 +198,12 @@ Action inputs:
 
 Model connection environment:
 
-| Variable       | Required | Intended meaning                                   |
-| -------------- | -------- | -------------------------------------------------- |
-| `ITS_PROTOCOL` | Yes      | Model API wire protocol                            |
-| `ITS_MODEL`    | Yes      | Model identifier accepted by the selected provider |
-| `ITS_API_KEY`  | Yes      | Credential for the selected provider               |
-| `ITS_BASE_URL` | No       | Base URL for a compatible gateway                  |
+| Variable            | Required | Intended meaning                                   |
+| ------------------- | -------- | -------------------------------------------------- |
+| `ZEROLOOP_PROTOCOL` | Yes      | Model API wire protocol                            |
+| `ZEROLOOP_MODEL`    | Yes      | Model identifier accepted by the selected provider |
+| `ZEROLOOP_API_KEY`  | Yes      | Credential for the selected provider               |
+| `ZEROLOOP_BASE_URL` | No       | Base URL for a compatible gateway                  |
 
 The planned protocol identifiers are `anthropic-messages`,
 `openai-chat-completions`, `openai-responses`, and `gemini`. They name wire
@@ -212,8 +212,8 @@ from implemented and tested behavior.
 
 ## Intended repository integration
 
-ITS is intended to reuse common repository conventions instead of replacing
-them with ITS-specific equivalents:
+0loop is intended to reuse common repository conventions instead of replacing
+them with 0loop-specific equivalents:
 
 - Load root-level `AGENTS.md` as repository instructions when it is present.
 - Load local skills from `.agents/skills/` when `.` is listed in `skills`.
@@ -228,7 +228,7 @@ The workflow's `permissions:` block sets the requested access for its
 workflows triggered by a `pull_request` from a fork receive a read-only token and
 do not receive repository secrets.
 
-ITS is intended to expose a GitHub write operation only when the effective token
+0loop is intended to expose a GitHub write operation only when the effective token
 has the corresponding permission. This permission-aware tool selection is not
 implemented yet.
 
@@ -248,4 +248,4 @@ change.
 
 ## License
 
-ITS is licensed under the [Apache License 2.0](LICENSE).
+0loop is licensed under the [Apache License 2.0](LICENSE).
