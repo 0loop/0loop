@@ -1,12 +1,8 @@
 name: 'CodeQL'
 
 on:
-  push:
-    branches: ['main']
-  pull_request:
-    branches: ['main']
   schedule:
-    - cron: '23 8 * * 2'
+    - cron: '23 8 * * 2,5'
 
 permissions:
   security-events: write
