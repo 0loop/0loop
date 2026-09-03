@@ -60,7 +60,11 @@ jobs:
             - Be specific. Name files and line ranges. Do not restate code.
             - If the diff is clean, say APPROVED.
             - If changes are needed, say CHANGES REQUESTED and list what must change before merge.
-            - Use the GH_TOKEN environment variable and run `gh pr comment "$PR_NUMBER" --body-file <review-file>` to publish your complete review as a comment on this pull request.
+            - Use the GH_TOKEN environment variable to publish one GitHub pull request review through the Reviews API.
+            - Submit the review with `event: COMMENT`, a concise summary in `body`, and actionable inline comments in `comments[]` using each changed file's `path`, diff `line`, and `side: RIGHT`.
+            - Obtain the changed-file patches with `gh api repos/$GITHUB_REPOSITORY/pulls/$PR_NUMBER/files`; do not invent line numbers.
+            - If there are no actionable findings, submit a COMMENT review with `APPROVED` in the body and an empty comments array.
+            - Do not use `gh pr comment`, `gh pr review --approve`, or `gh pr review --request-changes`.
             - Do not create commits, branches, or pull requests.
 
             Finish with exactly one of:
