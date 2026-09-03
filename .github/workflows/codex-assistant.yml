@@ -85,4 +85,8 @@ jobs:
             verdict="request_changes"
           fi
 
-          gh pr review "$PR_NUMBER" --"$verdict" --body-file "$body_file"
+          if [[ "$verdict" == "approve" ]]; then
+            gh pr review "$PR_NUMBER" --approve --body-file "$body_file"
+          else
+            gh pr review "$PR_NUMBER" --request-changes --body-file "$body_file"
+          fi
