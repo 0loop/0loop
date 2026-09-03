@@ -1,0 +1,87 @@
+name: 0loop assistant
+
+on:
+  pull_request_target:
+    types: [opened, synchronize, reopened]
+  issue_comment:
+    types: [created]
+
+permissions:
+  contents: read
+  pull-requests: write
+  issues: write
+
+concurrency:
+  group: assistant-${{ github.event.pull_request.number || github.event.issue.number }}-${{ github.sha }}
+  cancel-in-progress: true
+
+jobs:
+  pull_request_review:
+    if: github.event_name == 'pull_request_target'
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v5
+        with:
+          ref: refs/pull/${{ github.event.pull_request.number }}/merge
+          persist-credentials: false
+          fetch-depth: 0
+
+      - name: Run Codex review
+        id: codex
+        uses: openai/codex-action@v1
+        with:
+          openai-api-key: ${{ secrets.CODEX_API_KEY }}
+          responses-api-endpoint: ${{ vars.CODEX_BASE_URL }}
+          model: ${{ vars.CODEX_MODEL }}
+          allow-users: minorcell
+          permission-profile: ':read-only'
+          safety-strategy: drop-sudo
+          output-file: ${{ runner.temp }}/codex-review.md
+          prompt: |
+            You are 0loop, a code reviewer for this repository.
+
+            Review the pull request titled: ${{ github.event.pull_request.title }}
+
+            PR description:
+            ${{ github.event.pull_request.body }}
+
+            Compare the pull request changes against the base branch.
+
+            Rules:
+            - Focus on the diff. Do not review files outside the changed set.
+            - Flag correctness bugs, missing tests for changed behavior, and regressions against CONTRIBUTING.md and CLAUDE.md.
+            - If a change references an issue, verify the change addresses it.
+            - Be specific. Name files and line ranges. Do not restate code.
+            - If the diff is clean, say APPROVED.
+            - If changes are needed, say CHANGES REQUESTED and list what must change before merge.
+            - Do not create commits, branches, or pull requests.
+
+            Finish with exactly one of:
+            APPROVED
+            CHANGES REQUESTED
+
+      - name: Post review to pull request
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          body_file="$RUNNER_TEMP/codex-review.md"
+          if [[ ! -s "$body_file" ]]; then
+            echo "::error::Codex did not produce a review. Check the previous step log."
+            exit 1
+          fi
+
+          body=$(cat "$body_file")
+          if grep -Eq '(^|\s)APPROVED(\s|$|\.|,)' <<< "$body"; then
+            verdict="approve"
+          else
+            verdict="request_changes"
+          fi
+
+          gh pr review "$PR_NUMBER" --"$verdict" --body-file "$body_file"
