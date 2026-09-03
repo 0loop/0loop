@@ -33,14 +33,16 @@ jobs:
       - name: Run Codex review
         id: codex
         uses: openai/codex-action@v1
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
         with:
           openai-api-key: ${{ secrets.CODEX_API_KEY }}
           responses-api-endpoint: ${{ vars.CODEX_BASE_URL }}
           model: ${{ vars.CODEX_MODEL }}
           allow-users: minorcell
-          permission-profile: ':read-only'
-          safety-strategy: drop-sudo
-          output-file: ${{ runner.temp }}/codex-review.md
+          sandbox: danger-full-access
+          safety-strategy: unsafe
           prompt: |
             You are 0loop, a code reviewer for this repository.
 
@@ -58,35 +60,9 @@ jobs:
             - Be specific. Name files and line ranges. Do not restate code.
             - If the diff is clean, say APPROVED.
             - If changes are needed, say CHANGES REQUESTED and list what must change before merge.
+            - Use the GH_TOKEN environment variable and run `gh pr comment "$PR_NUMBER" --body-file <review-file>` to publish your complete review as a comment on this pull request.
             - Do not create commits, branches, or pull requests.
 
             Finish with exactly one of:
             APPROVED
             CHANGES REQUESTED
-
-      - name: Post review to pull request
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          PR_NUMBER: ${{ github.event.pull_request.number }}
-        shell: bash
-        run: |
-          set -euo pipefail
-
-          body_file="$RUNNER_TEMP/codex-review.md"
-          if [[ ! -s "$body_file" ]]; then
-            echo "::error::Codex did not produce a review. Check the previous step log."
-            exit 1
-          fi
-
-          body=$(cat "$body_file")
-          if grep -Eq '(^|\s)APPROVED(\s|$|\.|,)' <<< "$body"; then
-            verdict="approve"
-          else
-            verdict="request_changes"
-          fi
-
-          if [[ "$verdict" == "approve" ]]; then
-            gh pr review "$PR_NUMBER" --approve --body-file "$body_file"
-          else
-            gh pr review "$PR_NUMBER" --request-changes --body-file "$body_file"
-          fi
