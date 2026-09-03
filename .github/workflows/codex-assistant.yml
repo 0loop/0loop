@@ -37,7 +37,7 @@ jobs:
           responses-api-endpoint: ${{ vars.CODEX_BASE_URL }}
           model: ${{ vars.CODEX_MODEL }}
           allow-users: minorcell
-          permission-profile: ":read-only"
+          permission-profile: ':read-only'
           safety-strategy: drop-sudo
           output-file: ${{ runner.temp }}/codex-review.md
           prompt: |
