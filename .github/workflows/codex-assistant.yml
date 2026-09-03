@@ -28,6 +28,7 @@ jobs:
           ref: refs/pull/${{ github.event.pull_request.number }}/merge
           persist-credentials: false
           fetch-depth: 0
+          allow-unsafe-pr-checkout: true
 
       - name: Run Codex review
         id: codex
