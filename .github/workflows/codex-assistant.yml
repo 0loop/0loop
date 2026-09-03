@@ -1,0 +1,122 @@
+name: 0loop assistant
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+  issue_comment:
+    types: [created]
+
+permissions:
+  contents: read
+  pull-requests: write
+  issues: write
+
+concurrency:
+  group: assistant-${{ github.event.pull_request.number || github.event.issue.number }}-${{ github.sha }}
+  cancel-in-progress: true
+
+jobs:
+  pull_request_review:
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v5
+        with:
+          persist-credentials: false
+          fetch-depth: 0
+
+      - name: Set up Bun
+        uses: oven-sh/setup-bun@v2
+
+      - name: Install Codex CLI
+        run: bun add --global @openai/codex@latest
+
+      - name: Run Codex review
+        env:
+          CODEX_API_KEY: ${{ secrets.CODEX_API_KEY }}
+          CODEX_BASE_URL: ${{ vars.CODEX_BASE_URL }}
+          CODEX_MODEL: ${{ vars.CODEX_MODEL }}
+          PR_BASE_REF: ${{ github.event.pull_request.base.ref }}
+          PR_HEAD_REF: ${{ github.event.pull_request.head.ref }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          PR_TITLE: ${{ github.event.pull_request.title }}
+          PR_BODY: ${{ github.event.pull_request.body }}
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          if [[ -z "${CODEX_API_KEY:-}" ]]; then
+            echo "::error::Repository secret CODEX_API_KEY is not configured."
+            exit 1
+          fi
+
+          codex_args=(
+            --ask-for-approval never
+            --config 'model_provider="ci"'
+            --config 'model_providers.ci.name="CI provider"'
+            --config 'model_providers.ci.base_url="${CODEX_BASE_URL}"'
+            --config 'model_providers.ci.env_key="CODEX_API_KEY"'
+            --config 'model_providers.ci.wire_api="responses"'
+            --config 'model_providers.ci.supports_websockets=false'
+          )
+          if [[ -n "${CODEX_MODEL:-}" ]]; then
+            codex_args+=(--model "$CODEX_MODEL")
+          fi
+
+          review_prompt="You are 0loop, a code reviewer for this repository.
+
+          Review the pull request titled: ${PR_TITLE}
+
+          PR description:
+          ${PR_BODY}
+
+          Compare the head branch ${PR_HEAD_REF} against the base branch ${PR_BASE_REF}.
+
+          Rules:
+          - Focus on the diff. Do not review files outside the changed set.
+          - Flag correctness bugs, missing tests for changed behavior, and regressions against the stated goals in CONTRIBUTING.md and CLAUDE.md.
+          - If a change references an issue (fixes #N / closes #N), verify the change actually addresses that issue.
+          - Style: comments explain why, not what. Modules export through their index.ts and are imported by the @/ alias.
+          - Be specific. Name files and line ranges. Do not restate code.
+          - If the diff is clean and the issue is addressed, say APPROVED.
+          - If changes are needed, say CHANGES REQUESTED and list what must change before merge.
+          - Do not create commits, branches, or new pull requests.
+
+          Finish with exactly one of:
+          APPROVED
+          CHANGES REQUESTED"
+
+          CODEX_API_KEY="$CODEX_API_KEY" codex "${codex_args[@]}" exec \
+            --ignore-user-config \
+            --ephemeral \
+            --sandbox danger-full-access \
+            review \
+            --base "origin/${PR_BASE_REF}" \
+            --output-last-message "$RUNNER_TEMP/codex-review.md" \
+            "$review_prompt"
+
+      - name: Post review to pull request
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          body_file="$RUNNER_TEMP/codex-review.md"
+          if [[ ! -s "$body_file" ]]; then
+            echo "::error::Codex did not produce a review. Check the previous step log."
+            exit 1
+          fi
+
+          body=$(cat "$body_file")
+          if grep -Eq '(^|\s)APPROVED(\s|$|\.|,)' <<< "$body"; then
+            verdict="approve"
+          else
+            verdict="request_changes"
+          fi
+
+          gh pr review "$PR_NUMBER" --"$verdict" --body-file "$body_file"
