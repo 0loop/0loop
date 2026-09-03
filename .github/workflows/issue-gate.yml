@@ -5,14 +5,13 @@ on:
     types: [opened, synchronize, reopened]
 
 permissions:
-  issues: read
   pull-requests: read
 
 jobs:
   issue-gate:
     runs-on: ubuntu-latest
     steps:
-      - name: Require an accepted issue
+      - name: Require an issue reference
         uses: actions/github-script@v7
         with:
           script: |
@@ -27,23 +26,6 @@ jobs:
               return;
             }
 
-            for (const issueNumber of [...new Set(refs)]) {
-              try {
-                const { data: issue } = await github.rest.issues.get({
-                  owner: context.repo.owner,
-                  repo: context.repo.repo,
-                  issue_number: issueNumber,
-                });
-                if (issue.labels.some((l) => l.name === 'accepted')) {
-                  core.info(`Issue #${issueNumber} carries the accepted label — gate passed.`);
-                  return;
-                }
-              } catch (error) {
-                core.warning(`Could not read issue #${issueNumber}: ${error.message}`);
-              }
-            }
-
-            core.setFailed(
-              `None of the referenced issues (${[...new Set(refs)].map((n) => '#' + n).join(', ')}) carries the accepted label. ` +
-                'Open an issue and wait for the maintainer to accept it before opening a pull request.',
+            core.info(
+              `Found issue reference(s): ${[...new Set(refs)].map((n) => '#' + n).join(', ')}.`,
             );

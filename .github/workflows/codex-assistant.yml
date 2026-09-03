@@ -57,7 +57,7 @@ jobs:
             --ask-for-approval never
             --config 'model_provider="ci"'
             --config 'model_providers.ci.name="CI provider"'
-            --config 'model_providers.ci.base_url="${CODEX_BASE_URL}"'
+            --config "model_providers.ci.base_url=\"${CODEX_BASE_URL}\""
             --config 'model_providers.ci.env_key="CODEX_API_KEY"'
             --config 'model_providers.ci.wire_api="responses"'
             --config 'model_providers.ci.supports_websockets=false'
