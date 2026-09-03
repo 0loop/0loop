@@ -3,14 +3,13 @@ name: github-workflow
 description: >
   Git/GitHub collaboration rules for the 0loop repo (0loop/0loop). Follow this
   skill before any commit, branch, sync, rebase, PR, issue, or label
-  operation. Core rules: never touch the main branch directly; maintainers and
-  collaborators with write access use named branches from origin/main, while
-  external contributors use a fork; commits use the Conventional Commits format;
+  operation. Core rules: use the fork + issue + pull request workflow; `origin`
+  must point to the contributor's fork and another remote (name unrestricted)
+  must point to `0loop/0loop`; commits use the Conventional Commits format;
   sync with fetch + rebase before creating a branch and before pushing to keep
-  history linear; squash merges only; every change is issue-driven — a PR must
-  reference an issue carrying the accepted label, and decision labels
-  (accepted/rejected/deferred) are applied only by the maintainer side: the
-  maintainer, or the repo's AI agent on their explicit authorization.
+  history linear; every change is issue-driven — a PR must
+  reference an issue carrying the accepted label; decision labels
+  (accepted/rejected/deferred) are applied by repository maintainers.
 ---
 
 # GitHub Workflow
@@ -20,29 +19,19 @@ Git/GitHub collaboration rules for the 0loop repo (0loop/0loop). Check this docu
 ## Hard rules
 
 - Never touch the `main` branch directly: no direct commits, no direct pushes; main only receives changes through PRs.
-- Always squash-merge (the repo is already configured to allow squash only), keeping history linear.
-- Only maintainers and collaborators with write access push feature branches to the main repository; external contributors push to their forks.
+- Never use `git merge` or create merge commits. Keep branch history linear; the maintainer integrates each PR as one squashed commit.
+- Use a fork for every change. Push feature branches only to `origin`; the `0loop/0loop` repository receives changes through pull requests.
 
-## Roles and paths
+## Fork setup and workflow
 
-### Maintainers and collaborators with write access
+The checkout must have at least these remotes:
 
-Create a named branch directly from the latest `origin/main`:
+- `origin`: the contributor's fork (push destination).
+- A second remote with any name (commonly `upstream`): the canonical `0loop/0loop` repository (fetch source).
 
-1. Fetch the main repository: `git fetch origin`.
-2. Create a branch: `git switch -c <type>/<hyphenated-description> origin/main`.
-3. Commit and push the branch to `origin`.
-4. Open a PR from the branch to `main`, then squash merge.
+Create a clearly named branch from the canonical repository's `main`: `<type>/<hyphenated-description>`, e.g. `feature/agent-log`, `fix/readme-typo`.
 
-### External contributors without write access
-
-Must go through fork + PR:
-
-1. Fork the main repo and clone the fork.
-2. Configure the main repository as `upstream` and fetch it.
-3. Create a clearly named branch from `upstream/main`: `<type>/<hyphenated-description>`, e.g. `feature/agent-log`, `fix/readme-typo`.
-4. Commit and push the branch to the fork.
-5. Open a PR from the fork branch to the main repository's `main`, then squash merge.
+Every change follows this order: fork, issue/design, maintainer acceptance, implementation, then pull request.
 
 ## Commit message
 
@@ -54,36 +43,28 @@ Use the unified format `<type>(scope): message`:
 
 ## Syncing (rebase, keep a straight line)
 
-Fetch the canonical repository before creating a branch. Rebase a branch on the latest `main` before pushing.
-
-Maintainers and collaborators with write access:
+Before pushing or opening a PR, fetch the canonical remote, rebase on its latest `main`, and push the rebased branch to `origin`:
 
 ```bash
-git fetch origin
-git rebase origin/main
-```
-
-External contributors (on a fork branch, `upstream` pointing at the main repo):
-
-```bash
-git fetch upstream
-git rebase upstream/main
+git fetch <canonical-remote>
+git rebase <canonical-remote>/main
+git push -u origin <branch>
 ```
 
 - Use fetch + rebase only; no merge commits, history always a straight line.
 - On conflicts, resolve and `git rebase --continue`; never merge.
 
-## Issue first
+## Issue and design first
 
-Every change: issue first, then code, then PR:
+Every change starts with an issue that records the proposed design; do not write implementation code until that design is accepted:
 
 1. Open an issue using a template: **issue** for bugs and questions, **feature** for new functionality, or blank. State the type, scope, and impact; feature proposals include background, goals, and approach. Issue titles carry a conventional type prefix like commit messages (`feat: `, `fix: `, `docs: `, `chore: `); the feature template pre-fills `feat: `. Templates apply their labels automatically — contributors don't need (and can't) apply labels themselves.
 2. Wait for the maintainer's decision:
-   - `accepted` → development starts
+   - `accepted` → implementation may start
    - `rejected` → closed, no development
    - `deferred` → not scheduled
-     Decision labels are applied only by the maintainer side: the maintainer, or the repo's AI agent (Claude Code / 0loop) when the maintainer explicitly authorizes it. External contributors and automated triage never touch them. No substitute counts as acceptance: not answers in conversation, not "go ahead" — only the label on the issue. Without it, development must not start.
-3. Open a PR when development is done. The PR body must reference the issue with a closing keyword (`fixes #N` or `closes #N`), so merging closes the issue automatically. The issue-gate check enforces this — no exemptions, docs included.
+     Decision labels are applied by the repository maintainers. No substitute counts as acceptance: not answers in conversation, not "go ahead" — only the label on the issue. Without it, development must not start.
+3. After implementation is complete, open a PR from the `origin` branch to `0loop/0loop`'s `main`. The PR body must reference the accepted issue with a closing keyword (`fixes #N` or `closes #N`), so PR integration closes the issue automatically. The issue-gate check enforces this — no exemptions, docs included.
 
 ## PR body
 
@@ -101,7 +82,7 @@ No fixed template, but must state clearly:
 | `rejected` | Rejected                     |
 | `deferred` | Deferred, not scheduled      |
 
-Decision labels (`accepted`, `rejected`, `deferred`) are applied only by the maintainer side: the maintainer, or the repo's AI agent on the maintainer's explicit authorization. Type labels (`bug`, `enhancement`, `documentation`, `question`) are triage metadata; the feature template applies `enhancement` automatically, and the maintainer adds other type labels during triage.
+Decision labels (`accepted`, `rejected`, `deferred`) are applied by the repository maintainers. Type labels (`bug`, `enhancement`, `documentation`, `question`) are triage metadata; the feature template applies `enhancement` automatically, and maintainers add other type labels during triage.
 
 ## Pre-push checklist
 
@@ -109,4 +90,4 @@ Decision labels (`accepted`, `rejected`, `deferred`) are applied only by the mai
 - [ ] Commit messages follow `<type>(scope): message`
 - [ ] The PR body references an issue carrying `accepted` with a closing keyword (the issue-gate check enforces this)
 - [ ] The PR body clearly states what changed and why
-- [ ] The PR merges with squash
+- [ ] The maintainer integrates the PR as one squashed commit
