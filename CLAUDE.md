@@ -1,6 +1,6 @@
 ## Collaboration
 
-All changes are issue-driven: open an issue via a template (issue / feature) and wait for the maintainer to apply the `accepted` label before starting development. Pull requests must reference an accepted issue with a closing keyword (`fixes #N`); the issue-gate CI check enforces this with no exemptions. Decision labels (`accepted` / `rejected` / `deferred`) belong to the maintainer side: the maintainer, or this AI agent when the maintainer explicitly authorizes it. See CONTRIBUTING.md and the github-workflow skill for the full workflow.
+See CONTRIBUTING.md and the github-workflow skill. Changes go to `0loop/0loop` through pull requests.
 
 ## Code Style Guidelines
 

@@ -8,18 +8,6 @@
 - Install dependencies: `bun install --frozen-lockfile`.
 - Checks: `bun run fmt:check`, `bun run lint:check`, `bun run build` (`dist/` is gitignored).
 
-## Issue and design first
-
-Every change starts with an issue that records the proposed design, not code:
-
-1. Open an issue using a template: **Issue** for bugs and questions, **Feature** for new functionality. State the type, scope, and impact; feature proposals include background, goals, and approach. Issue titles carry a conventional type prefix like commit messages (`feat: `, `fix: `, `docs: `, `chore: `); the Feature template pre-fills `feat: ` and applies the `enhancement` label.
-2. Wait for a decision. A repository maintainer applies a decision label:
-   - `accepted` → implementation may start
-   - `rejected` → closed, no development
-   - `deferred` → not scheduled
-     Decision labels belong to repository maintainers; contributors do not apply them.
-3. After the design is accepted, implement it. Then open a pull request that references the issue with a closing keyword (`fixes #N` / `closes #N`). The issue-gate check blocks pull requests that don't reference an accepted issue — there are no exemptions, docs included.
-
 ## Making changes
 
 - Fork the repository and use your fork as `origin` (the push destination). Add a second remote, with any name such as `upstream` or `0loop`, pointing to `0loop/0loop` (the canonical fetch source).
@@ -34,7 +22,7 @@ Every change starts with an issue that records the proposed design, not code:
 
 - Open the pull request from your fork branch to `0loop/0loop`'s `main`. Do not push directly to `main` or create merge commits; pull requests are integrated as one squashed commit to keep history linear.
 - Commit messages follow Conventional Commits: `<type>(scope): message`, imperative mood, describing only that change.
-- A pull request body states what changed and why and references the accepted issue with a closing keyword (`fixes #N`); the issue-gate check enforces this.
+- A pull request body states what changed and why.
 
 ## Code style
 
