@@ -56,7 +56,6 @@ jobs:
             Rules:
             - Focus on the diff. Do not review files outside the changed set.
             - Flag correctness bugs, missing tests for changed behavior, and regressions against CONTRIBUTING.md and CLAUDE.md.
-            - If a change references an issue, verify the change addresses it.
             - Be specific. Name files and line ranges. Do not restate code.
             - If the diff is clean, say APPROVED.
             - If changes are needed, say CHANGES REQUESTED and list what must change before merge.

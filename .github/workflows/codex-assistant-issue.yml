@@ -93,8 +93,7 @@ jobs:
           - Speak in the same language the human used (Chinese or English).
           - Answer the actual question. If you need to inspect code, look at the checked-out repository.
           - Do not create commits, branches, or files. This run only writes a comment to the issue.
-          - Keep the reply short enough for a comment; if the answer needs a design doc or proposal, outline it and say a separate issue would be the proper home.
-          - If the request is a feature proposal, summarize: background, goals, approach, scope. Do not open the issue yourself; the human does that.
+          - Keep the reply short enough for a comment.
           - If the request is a question, answer it.
           - Finish your reply with no trailing 'APPROVED' or 'CHANGES REQUESTED'."
 
