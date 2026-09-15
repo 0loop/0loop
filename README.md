@@ -28,11 +28,12 @@ jobs:
       - uses: actions/checkout@v4
       - uses: 0loop/0loop@v1
         with:
-          protocol: openai-responses
-          model: your-model-id
-          prompt: |
-            Review this pull request. Report findings in the order
-            correctness, security, and maintainability, then publish a summary.
+          agent: |
+            protocol: openai-responses
+            model: your-model-id
+            prompt: |
+              Review this pull request. Report findings in the order
+              correctness, security, and maintainability, then publish a summary.
         env:
           ZEROLOOP_BASE_URL: ${{ vars.ZEROLOOP_BASE_URL }}
           ZEROLOOP_API_KEY: ${{ secrets.ZEROLOOP_API_KEY }}
