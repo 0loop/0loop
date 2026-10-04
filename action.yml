@@ -4,15 +4,11 @@ branding:
   icon: terminal
   color: blue
 inputs:
-  prompt:
-    description: Natural-language description of what this run should accomplish. Event context is appended automatically.
+  agent:
+    description: YAML object defining the agent. Keys are protocol, model, effort, meta, runtime, prompt or prompt-file, mcp, and skills. Event context is appended to the prompt automatically.
     required: true
-  tools:
-    description: Additional tools, array form.
-  skills:
-    description: Skills, array form. github.com/<owner>/<repo> installs a remote skill repo via skills.sh; . enables this repo's .agents/skills/ directory.
-  mcp:
-    description: MCP server launch commands, array form. Credentials reference $VAR slots, resolved from env.
+  permissions:
+    description: YAML object bounding the run. Keys are tools (read or write, default read), network (allowed hosts), and allow-users (GitHub usernames that may start the run).
 runs:
   using: composite
   steps:
@@ -28,11 +24,5 @@ runs:
         bun run build
         ./dist/0loop
       env:
-        ZEROLOOP_PROMPT: ${{ inputs.prompt }}
-        ZEROLOOP_TOOLS: ${{ inputs.tools }}
-        ZEROLOOP_SKILLS: ${{ inputs.skills }}
-        ZEROLOOP_MCP: ${{ inputs.mcp }}
-        ZEROLOOP_PROTOCOL: ${{ env.ZEROLOOP_PROTOCOL }}
-        ZEROLOOP_MODEL: ${{ env.ZEROLOOP_MODEL }}
-        ZEROLOOP_API_KEY: ${{ env.ZEROLOOP_API_KEY }}
-        ZEROLOOP_BASE_URL: ${{ env.ZEROLOOP_BASE_URL }}
+        ZEROLOOP_AGENT: ${{ inputs.agent }}
+        ZEROLOOP_PERMISSIONS: ${{ inputs.permissions }}

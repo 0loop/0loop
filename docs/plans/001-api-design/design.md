@@ -58,13 +58,13 @@ MCP 不使用 `ZEROLOOP_` 保留名。每个 MCP 在该条目的 `env` 中声明
 
 | 字段          | 管辖                         | 语义                                                                                                                                                           | 默认       |
 | ------------- | ---------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------- |
-| `tools`       | agent 在 runner 本地能做什么 | `read`（只读任务，如 review）/ `write`（可编辑文件、可用 bash；bash 写文件与文件工具受同一 workspace 磁盘边界管辖）                                            | `read`     |
+| `tools`       | agent 在 runner 本地能做什么 | `read`（只读文件工具，不提供 shell）/ `write`（可编辑文件、可用 bash；bash 写文件与文件工具受同一 workspace 磁盘边界管辖）                                            | `read`     |
 | `network`     | agent 能出网到哪里           | 主机列表。未配置则不限制；配置后仅允许列表中的主机。**模型端点（`ZEROLOOP_BASE_URL`）始终允许访问**。环境准备阶段（runtime 安装、skills 拉取、MCP 启动）不受限 | 不限制     |
 | `allow-users` | 谁能启动一次 run             | GitHub 用户名数组。未配置则不额外限制（能触发该 workflow 的人均可）                                                                                            | 不额外限制 |
 
 规则：
 
-- `tools` 为 `read` / `write` 两级：**默认只读，需要写文件时指定 `write`。** `write` 指写工作区文件并允许 bash，不表示 GitHub API 权限。
+- `tools` 为 `read` / `write` 两级：**默认只读，需要写文件或使用 shell 时指定 `write`。** `read` 仅提供只读文件工具，不提供 shell；`write` 指写工作区文件并允许 bash，不表示 GitHub API 权限。
 - GitHub API 权限由 job 级 `permissions:` 管理，不在 0loop 的 `permissions` 中重复声明。
 - 凭证隔离：`ZEROLOOP_*` 只进入 0loop / 模型客户端；MCP 条目 `env` 中列出的变量只进入该 MCP 进程；上述变量均不进入 agent 可见环境。
 - fork PR 遵循 GitHub 平台降级（只读 token、无 secrets）；`GITHUB_TOKEN` 默认不含 workflow scope。
@@ -97,11 +97,12 @@ jobs:
       - uses: actions/checkout@v4
       - uses: 0loop/0loop@v1
         with:
-          protocol: openai-responses
-          model: your-model-id
-          prompt: |
-            Review this pull request. Report findings in the order
-            correctness, security, and maintainability, then publish a summary.
+          agent: |
+            protocol: openai-responses
+            model: your-model-id
+            prompt: |
+              Review this pull request. Report findings in the order
+              correctness, security, and maintainability, then publish a summary.
         env:
           ZEROLOOP_BASE_URL: ${{ vars.ZEROLOOP_BASE_URL }}
           ZEROLOOP_API_KEY: ${{ secrets.ZEROLOOP_API_KEY }}
@@ -111,16 +112,17 @@ jobs:
 # 修 CI：指定 runtime、effort、meta，写文件，远程 skills
 - uses: 0loop/0loop@v1
   with:
-    protocol: openai-responses
-    model: your-model-id
-    runtime: codex@0.148.0
-    effort: high
-    meta: |
-      context-window: 272000
-    prompt: |
-      The CI failed. Read the failure, fix the code, verify with tests.
-    skills: |
-      - github.com/owner/ci-fix-skills@v1
+    agent: |
+      protocol: openai-responses
+      model: your-model-id
+      runtime: codex@0.148.0
+      effort: high
+      meta: |
+        context-window: 272000
+      prompt: |
+        The CI failed. Read the failure, fix the code, verify with tests.
+      skills: |
+        - github.com/owner/ci-fix-skills@v1
     permissions: |
       tools: write
   env:
@@ -132,10 +134,11 @@ jobs:
 # Issue 分诊：prompt-file、runtime pi、限制 allow-users
 - uses: 0loop/0loop@v1
   with:
-    protocol: anthropic-messages
-    model: your-model-id
-    runtime: pi
-    prompt-file: .github/prompts/issue-triage.md
+    agent: |
+      protocol: anthropic-messages
+      model: your-model-id
+      runtime: pi
+      prompt-file: .github/prompts/issue-triage.md
     permissions: |
       allow-users:
         - alice
@@ -149,18 +152,19 @@ jobs:
 # 查外部系统再回复 Issue：多个 MCP；有凭证的用 env 对应，无凭证的只写 command
 - uses: 0loop/0loop@v1
   with:
-    protocol: gemini
-    model: your-model-id
-    prompt: |
-      Query Slack and Jira, then reply on the issue.
-    mcp: |
-      - command: npx -y @slack/mcp
-        env:
-          API_KEY: SLACK_BOT_TOKEN
-      - command: npx -y @jira/mcp
-        env:
-          API_KEY: JIRA_API_TOKEN
-      - command: npx -y @org/docs-mcp
+    agent: |
+      protocol: gemini
+      model: your-model-id
+      prompt: |
+        Query Slack and Jira, then reply on the issue.
+      mcp: |
+        - command: npx -y @slack/mcp
+          env:
+            API_KEY: SLACK_BOT_TOKEN
+        - command: npx -y @jira/mcp
+          env:
+            API_KEY: JIRA_API_TOKEN
+        - command: npx -y @org/docs-mcp
     permissions: |
       tools: read
   env:
@@ -174,13 +178,14 @@ jobs:
 # 发版：本仓库 skills + 远程 skills，限制 network 与 allow-users
 - uses: 0loop/0loop@v1
   with:
-    protocol: openai-chat-completions
-    model: gateway-model-id
-    prompt: |
-      Prepare a release according to the repository's release skill.
-    skills: |
-      - .
-      - github.com/owner/release-skills@v1
+    agent: |
+      protocol: openai-chat-completions
+      model: gateway-model-id
+      prompt: |
+        Prepare a release according to the repository's release skill.
+      skills: |
+        - .
+        - github.com/owner/release-skills@v1
     permissions: |
       tools: write
       network:
