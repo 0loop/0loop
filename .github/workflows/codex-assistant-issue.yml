@@ -37,24 +37,28 @@ jobs:
         id: ctx
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          ISSUE_NUMBER: ${{ github.event.issue.number }}
+          ISSUE_TITLE: ${{ github.event.issue.title }}
+          ISSUE_BODY: ${{ github.event.issue.body }}
+          COMMENT_BODY: ${{ github.event.comment.body }}
         run: |
           set -euo pipefail
           out="$RUNNER_TEMP/issue-context.md"
           {
-            echo "# Issue #${{ github.event.issue.number }}: ${{ github.event.issue.title }}"
+            echo "# Issue #$ISSUE_NUMBER: $ISSUE_TITLE"
             echo
             echo "## Body"
             echo
-            echo "${{ github.event.issue.body }}"
+            echo "$ISSUE_BODY"
             echo
             echo "## Comment that triggered this run"
             echo
-            echo "${{ github.event.comment.body }}"
+            echo "$COMMENT_BODY"
             echo
             echo "## Related comments"
             echo
           } > "$out"
-          gh issue view "${{ github.event.issue.number }}" --comments --json comments --jq '.comments[] | "### \( .user.login )\n\n\( .body )\n"' >> "$out" 2>/dev/null || true
+          gh issue view "$ISSUE_NUMBER" --comments --json comments --jq '.comments[] | "### \( .user.login )\n\n\( .body )\n"' >> "$out" 2>/dev/null || true
           echo "FILE=$out" >> "$GITHUB_STEP_SUMMARY"
 
       - name: Run Codex
